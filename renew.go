@@ -1,0 +1,91 @@
+package main
+
+import (
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"flag"
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/boltdb/bolt"
+)
+
+// read the ca cert and key from bolt and write them to disk as pem
+func exportCA(boltDBPath string) error {
+	db, err := bolt.Open(boltDBPath, 0600, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	var (
+		certbytes []byte
+		keybytes  []byte
+		key       *rsa.PrivateKey
+		cert      *x509.Certificate
+	)
+
+	// read the ca cert and key from bolt db bucket
+	db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("scep_certificates"))
+		certbytes = b.Get([]byte("ca_certificate"))
+		keybytes = b.Get([]byte("ca_key"))
+
+		return nil
+	})
+
+	// parse bytes from bolt
+	key, _ = x509.ParsePKCS1PrivateKey(keybytes)
+	cert, _ = x509.ParseCertificate(certbytes)
+
+	// write the ca cert to file
+	b := pem.Block{Type: "CERTIFICATE", Bytes: certbytes}
+	f, _ := os.OpenFile("./out.pem", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	pem.Encode(f, &b)
+
+	// write the ca key to file
+	keyBlock := pem.Block{Type: "RSA PRIVATE KEY", Bytes: keybytes}
+	keyFile, _ := os.OpenFile("./key.pem", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	pem.Encode(keyFile, &keyBlock)
+
+	fmt.Println(key)
+	fmt.Println(cert)
+
+	return nil
+}
+
+// read ca certificate from pem encoded file and shove into scep_certificates bucket, overwriting the current ca certificate
+func importCA(boltDBPath string) error {
+	return nil
+}
+
+func main() {
+	var (
+		flBoltDBPath string
+		flExportCA   bool
+		flImportCA   bool
+		flCACert     string
+	)
+
+	flag.StringVar(&flBoltDBPath, "boltdb", "", "path to bolt db")
+	flag.BoolVar(&flExportCA, "export-ca", false, "export ca key and certificate")
+	flag.StringVar(&flCACert, "ca-cert", "", "path to certificate to import into scep_certificates bucket")
+	flag.BoolVar(&flImportCA, "import-ca", false, "import ca into scep_certificates bucket")
+
+	flag.Parse()
+
+	if flBoltDBPath == "" {
+		log.Fatal("must provide db path")
+	}
+
+	if flExportCA {
+		exportCA(flBoltDBPath)
+	} else if flImportCA {
+		importCA(flBoltDBPath)
+	} else {
+		log.Fatal("must provide instructions")
+	}
+
+}

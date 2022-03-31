@@ -1,0 +1,10 @@
+*.db
+*.pem
+/*.cnf
+/build/
+/go.sum
+/mdm-files
+/micromdm_certs
+/prod
+/test
+/todo
