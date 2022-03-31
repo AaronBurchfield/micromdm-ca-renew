@@ -1,6 +1,5 @@
 *.db
 *.pem
-/*.cnf
 /build/
 /go.sum
 /mdm-files
