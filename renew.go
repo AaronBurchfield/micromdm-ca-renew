@@ -66,8 +66,6 @@ func importCA(boltDBPath string, caCertPath string) error {
 	}
 	defer db.Close()
 
-	// testBytes := []byte("asdf")
-	// certBucket := "scep_certficates"
 	crtBytes := certPEM.Bytes
 
 	err = db.Update(func(tx *bolt.Tx) error {
@@ -111,10 +109,7 @@ func showCA(boltDBPath string) error {
 	fmt.Println(key)
 	fmt.Println(cert)
 
-	// fmt.Println(certbytes)
-
-	// fmt.Println(key.PublicKey)
-	fmt.Printf("is ca: %v\nnot valid before: %v\nnot valid after: %v\n", cert.IsCA, cert.NotBefore, cert.NotAfter)
+	fmt.Printf("is ca: %v\nserial: %s\norg: %v\nnot valid before: %v\nnot valid after: %v\n", cert.IsCA, cert.SerialNumber, cert.Issuer.Organization[0], cert.NotBefore, cert.NotAfter)
 
 	return nil
 }
