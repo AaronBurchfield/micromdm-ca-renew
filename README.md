@@ -25,3 +25,7 @@
 1. import new ca certificate into that backup copy of your very important and irreplicable micromdm bolt db
 
     `./build/renew -boltdb ./micromdm_i_swear_i_backed_this_up.db -import-ca -ca-cert ./ca_cert_extended.pem`
+
+1. inspect the updated ca certificate from micromdm bolt db, note the new validity dates
+
+    `./build/renew -boltdb ./micromdm_i_swear_i_backed_this_up.db -show-ca`
